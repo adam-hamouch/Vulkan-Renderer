@@ -15,6 +15,11 @@ find_package(Vulkan REQUIRED)
 # ─────────────────────────────────────────────────────────────────────────────
 file(GLOB_RECURSE VK_SOURCES "Code/Source/*.cpp")
 
+file(GLOB_RECURSE MATHS_SOURCES "Libs/maths/src/*.cpp")
+add_library(MATHS STATIC ${MATHS_SOURCES}
+        Libs/maths/includes/Math.h)
+target_compile_features(MATHS PUBLIC cxx_std_20)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # EXECUTABLE
 # Point d'entree du moteur. Quand ton projet grandira, seul main.cpp
@@ -24,12 +29,6 @@ add_executable(VulkanRenderer ${VK_SOURCES})
 
 target_compile_features(VulkanRenderer PUBLIC cxx_std_20)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# DEFINES PREPROCESSEUR
-# Pour ajouter un define : copie le pattern existant.
-# Ex : ajouter MAX_FRAMES_IN_FLIGHT=2 en permanence :
-#   MAX_FRAMES_IN_FLIGHT=2
-# ─────────────────────────────────────────────────────────────────────────────
 target_compile_definitions(VulkanRenderer PRIVATE
     $<$<CONFIG:Debug>:VULKAN_VALIDATION_LAYERS>
     PLATFORM_WINDOWS
@@ -54,7 +53,8 @@ target_include_directories(VulkanRenderer PUBLIC Code/Include)
 # ─────────────────────────────────────────────────────────────────────────────
 target_link_libraries(VulkanRenderer PRIVATE
     Vulkan::Vulkan
-    glfw
+    glfw 
+    MATHS
     # Ajouter ici les prochaines libs :
     # glm          (si packagée, sinon header-only dans Code/Include/)
     # ImGui        (debug UI, a ajouter quand tu veux un overlay de debug)
