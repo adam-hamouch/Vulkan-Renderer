@@ -14,6 +14,7 @@ find_package(Vulkan REQUIRED)
 # pour ne pas les dupliquer dans l'executable.
 # ─────────────────────────────────────────────────────────────────────────────
 file(GLOB_RECURSE VK_SOURCES "Code/Source/*.cpp")
+file(GLOB_RECURSE VK_HEADERS "Code/Include/*.h")
 
 file(GLOB_RECURSE MATHS_SOURCES "Libs/maths/src/*.cpp")
 add_library(MATHS STATIC ${MATHS_SOURCES}
@@ -25,8 +26,7 @@ target_compile_features(MATHS PUBLIC cxx_std_20)
 # Point d'entree du moteur. Quand ton projet grandira, seul main.cpp
 # devrait rester ici — la logique metier sera deplacee dans des libs.
 # ─────────────────────────────────────────────────────────────────────────────
-add_executable(VulkanRenderer ${VK_SOURCES})
-
+add_executable(VulkanRenderer ${VK_SOURCES} ${VK_HEADERS})
 target_compile_features(VulkanRenderer PUBLIC cxx_std_20)
 
 target_compile_definitions(VulkanRenderer PRIVATE
@@ -35,7 +35,10 @@ target_compile_definitions(VulkanRenderer PRIVATE
 )
 
 
-target_include_directories(VulkanRenderer PUBLIC Code/Include)
+target_include_directories(VulkanRenderer PUBLIC
+        Code/Include
+        Libs           
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LIBRAIRIES

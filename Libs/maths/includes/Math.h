@@ -39,6 +39,10 @@ public:
     Vector2D& operator/=(float scalar);
     float Norm() const;
     float DotProduct(const Vector2D& v1, const Vector2D& v2) const;
+
+    bool operator==(const Vector2D& other) const {
+        return x == other.x && y == other.y;
+    }
 };
 
 class  Vector3D {
@@ -74,6 +78,10 @@ public:
 
     static Vector3D Normalize(Vector3D v);
     static Vector3D CrossProduct(Vector3D v1, Vector3D v2); 
+    
+    bool operator==(const Vector3D& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
 };
 
 class  Quaternion
