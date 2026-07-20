@@ -13,10 +13,10 @@ find_package(Vulkan REQUIRED)
 # deplace ses sources hors de Code/Source/ et cree un add_library dedie
 # pour ne pas les dupliquer dans l'executable.
 # ─────────────────────────────────────────────────────────────────────────────
-file(GLOB_RECURSE VK_SOURCES "Code/Source/*.cpp")
-file(GLOB_RECURSE VK_HEADERS "Code/Include/*.h")
+file(GLOB_RECURSE VK_SOURCES CONFIGURE_DEPENDS "Code/Source/*.cpp")
+file(GLOB_RECURSE VK_HEADERS CONFIGURE_DEPENDS "Code/Include/*.h")
 
-file(GLOB_RECURSE MATHS_SOURCES "Libs/maths/src/*.cpp")
+file(GLOB_RECURSE MATHS_SOURCES CONFIGURE_DEPENDS "Libs/maths/src/*.cpp")
 add_library(MATHS STATIC ${MATHS_SOURCES}
         Libs/maths/includes/Math.h)
 target_compile_features(MATHS PUBLIC cxx_std_20)

@@ -20,7 +20,7 @@
 
 #include "maths/includes/Math.h"
 
-#include "Camera.h"
+#include "LowRenderer/Camera.h"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
