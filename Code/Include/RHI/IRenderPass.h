@@ -37,16 +37,19 @@ struct SubpassDesc
 
 struct RenderPassDesc
 {
-    std::vector<Attachment*> attachments; 
+    std::vector<Attachment> attachments; 
     std::vector<SubpassDesc> subPasses;
 };
+
+class IDevice;
+class ICommandList;
 
 class IRenderPass
 {
 public:
     virtual ~IRenderPass() = default;
     
-    virtual void Create(RenderPassDesc desc) = 0;
+    virtual void Create(IDevice* device, RenderPassDesc desc) = 0;
     virtual void Destroy() = 0;
 
     virtual void Begin(ICommandList* commandist) = 0;

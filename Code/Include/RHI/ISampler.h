@@ -1,5 +1,29 @@
 #pragma once
 
+enum class FilterMode
+{
+    Nearest,
+    Linear
+};
+
+enum class AddressMode
+{
+    Repeat,
+    MirroredRepeat,
+    ClampToEdge,
+    ClampToBorder
+};
+
+struct SamplerDesc 
+{
+    FilterMode magFilter;
+    FilterMode minFilter;
+    AddressMode addressMode;
+    float maxAnisotropy;
+};
+
+class IDevice;
+
 class ISampler
 {
 public:

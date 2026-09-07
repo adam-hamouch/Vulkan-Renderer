@@ -5,5 +5,6 @@
 class VulkanDevice : public IDevice
 {
 public:
-
+    void Create() override;
+    void Destroy() override;
 };

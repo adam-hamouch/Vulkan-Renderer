@@ -147,7 +147,7 @@ namespace std {
     };
 }
 
-class Application
+class Editor
 {
 public:
     void run() 
@@ -246,7 +246,7 @@ private:
     
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) 
     {
-        auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<Editor*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
     
@@ -1859,7 +1859,7 @@ private:
 
 int main() 
 {
-    Application app;
+    Editor app;
 
     try 
     {

@@ -18,7 +18,8 @@ file(GLOB_RECURSE VK_HEADERS CONFIGURE_DEPENDS "Code/Include/*.h")
 
 file(GLOB_RECURSE MATHS_SOURCES CONFIGURE_DEPENDS "Libs/maths/src/*.cpp")
 add_library(MATHS STATIC ${MATHS_SOURCES}
-        Libs/maths/includes/Math.h)
+        Libs/maths/includes/Math.h
+        Code/Source/Core/Application.h)
 target_compile_features(MATHS PUBLIC cxx_std_20)
 
 # ─────────────────────────────────────────────────────────────────────────────

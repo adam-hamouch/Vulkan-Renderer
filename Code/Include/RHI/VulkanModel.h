@@ -5,5 +5,6 @@
 class VulkanModel : public IModel
 {
 public:
-
+    void Load(const char* path) override;
+    void Destroy() override;
 };

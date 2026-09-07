@@ -1,5 +1,8 @@
 #pragma once
 
+class Window;
+class IInstance;
+
 class ISurface
 {
 public:
