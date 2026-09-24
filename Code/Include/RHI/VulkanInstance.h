@@ -9,6 +9,8 @@ public:
     void Create(const char* appName) override;
     void Destroy() override;
     
+    VkInstance GetVkInstance() { return instance; }
+    
 private:
     bool checkValidationLayerSupport();
     VkInstance instance;

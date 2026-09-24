@@ -1,10 +1,5 @@
 ﻿#pragma once
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image/stb_image.h>
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader/tiny_obj_loader.h>
-
 #include "Core/Window/Window.h"
 #include "RHI/RHIUtils.h"
 #include "RHI/RHI.h"
@@ -59,14 +54,14 @@ public:
         rhiInstance->Create("VulkanRenderer");
         rhiSurface->Create(rhiInstance, window->GetHandle());
         rhiDevice->Create(rhiInstance, rhiSurface);
-        rhiSwapChain->Create(rhiDevice, rhiSurface, window->GetHandle());
+        rhiSwapChain->Create(rhiDevice, rhiSurface, window->GetHandle()); 
         rhiQueue->Create(rhiDevice, QueueType::Graphics);
 
         InitCamera();
 
         RenderPassDesc renderPassDesc;
         renderPassDesc.attachments = {
-            {AttachmentFormat::BGRA8,   LoadOp::Clear,    StoreOp::DontCare, false, false, 4},
+            {AttachmentFormat::BGRA8,   LoadOp::Clear,    StoreOp::Store, false, false, 4},
             {AttachmentFormat::Depth32, LoadOp::Clear,    StoreOp::DontCare, true,  false, 4},
             {AttachmentFormat::BGRA8,   LoadOp::DontCare, StoreOp::Store,    false, true,  1}
         };
@@ -99,7 +94,7 @@ public:
 
         rhiMaterial->Create({rhiTexture, nullptr, rhiSampler, rhiPipeline});
 
-        LoadModel("../../Ressources/Models/viking_room.obj");
+        rhiModel->Load("../../Ressources/Models/viking_room.obj");
 
         BufferDesc vertexBufferDesc;
         vertexBufferDesc.usage = BufferUsage::Vertex;
@@ -116,12 +111,6 @@ public:
         indexBuffer->Upload(indices.data(), sizeof(uint32_t) * indices.size());
 
         rhiMesh->Create(rhiDevice, rhiModel, rhiMaterial);
-
-        // TODO: createUniformBuffers
-        // TODO: createDescriptorPool
-        // TODO: createDescriptorSets
-        // TODO: createCommandBuffers
-        // TODO: createSyncObjects
     }
     
     void RenderLoop()
@@ -147,45 +136,6 @@ public:
         swapChainExtent.width / (float)swapChainExtent.height,
         0.1f,
         10.0f);
-    }
-    
-    void LoadModel(const char* path)
-    {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string err;
-
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, path))
-            throw std::runtime_error(err);
-
-        for (const auto& shape : shapes)
-        {
-            for (const auto& index : shape.mesh.indices)
-            {
-                Vertex vertex{};
-
-                vertex.pos = {
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]
-                };
-
-                vertex.texCoord = {
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-                };
-
-                vertex.color = {1.0f, 1.0f, 1.0f};
-
-                if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-
-                indices.push_back(uniqueVertices[vertex]);
-            }
-        }
     }
     
 private:

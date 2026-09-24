@@ -1,7 +1,9 @@
 #pragma once
+#include <vector>
 
 class IRenderPass;
 class IShader;
+class IDevice;
 
 enum class PrimitiveTopology
 {
@@ -34,7 +36,7 @@ struct VertexLayout
 
 struct PipelineDesc
 {
-    std::vector<IShader> shaders;
+    std::vector<IShader*> shaders;
 
     VertexLayout layout;
     PrimitiveTopology topology;
@@ -46,7 +48,7 @@ struct PipelineDesc
 
     bool blendEnable;
 
-    int sampleCount;
+    uint32_t  sampleCount;
 
     IRenderPass* renderPass = nullptr;
 };
@@ -56,6 +58,6 @@ class IPipeline
 public:
     virtual ~IPipeline() = default;
     
-    virtual void Create(PipelineDesc desc) = 0;
+    virtual void Create(IDevice* device, PipelineDesc desc) = 0;
     virtual void Destroy() = 0;
 };

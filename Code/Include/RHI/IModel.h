@@ -21,7 +21,7 @@ public:
     virtual void Load(const char* path) = 0;
     virtual void Destroy() = 0;
     
-private:
+protected:
     std::vector<Vertex> vertices;
     std::vector<int> indices;
 };

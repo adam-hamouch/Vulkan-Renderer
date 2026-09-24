@@ -26,3 +26,9 @@ constexpr bool enableValidationLayers = true;
 #else
 constexpr bool enableValidationLayers = false;
 #endif
+
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
