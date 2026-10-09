@@ -18,9 +18,9 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
-          # Clé API Anthropic (Settings > Secrets and variables > Actions)
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Ou, avec un abonnement Claude : claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Token lié à l'abonnement Claude (généré via `claude setup-token`),
+          # stocké dans Settings > Secrets and variables > Actions
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_args: >-
             --max-turns 15
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(gh api:*)"
