@@ -28,6 +28,23 @@ jobs:
             Tu fais la code review du push ${{ github.sha }} sur le repo ${{ github.repository }},
             un moteur de rendu Vulkan en C++20 avec une couche RHI.
 
+            CONTEXTE DE TRAVAIL (important) :
+            Le projet est en refactor progressif et long : le pipeline Vulkan du tutoriel
+            (gros fichier de base, ex. main.cpp / Application) est reconstitué morceau par morceau
+            sous forme de RHI (interfaces I*.h + implémentations Vulkan*). À chaque push le projet
+            NE COMPILE PAS, c'est attendu : le fichier de base est découpé au fur et à mesure,
+            des classes sont à moitié écrites, des Destroy()/méthodes sont encore vides, des
+            appels pointent vers du code pas encore migré.
+            - Ne signale PAS : erreurs de compilation, symboles manquants, méthodes vides ou TODO,
+              code mort ou commenté dans le fichier de base, intégration pas encore branchée.
+            - Concentre-toi sur les MODIFICATIONS de ce commit : le code ajouté ou changé est-il
+              correct en lui-même, et fidèle à ce qu'il remplace dans le code Vulkan d'origine
+              (paramètres perdus, flags/enum mal convertis, ordre d'appels changé, ressource créée
+              sans destroy prévu, logique dupliquée entre l'ancien fichier et la RHI) ?
+            - Garde la vue d'ensemble en tête mais ne fais pas d'audit global du projet. Une remarque
+              d'architecture RHI n'est utile que si ce commit introduit un choix qui posera
+              problème quand la RHI sera fonctionnelle.
+
             1. Récupère le diff : `git diff ${{ github.event.before }} ${{ github.sha }}`.
                Si `before` vaut 0000000..., utilise `git show ${{ github.sha }}`.
             2. Relis les fichiers modifiés en entier si le contexte est nécessaire.
