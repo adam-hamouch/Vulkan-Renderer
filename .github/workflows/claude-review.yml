@@ -3,6 +3,7 @@ name: Claude Code Review
 on:
   push:
     branches: [main]
+  workflow_dispatch:   # relance manuelle depuis l'onglet Actions
 
 permissions:
   contents: write      # nécessaire pour commenter un commit
@@ -46,7 +47,7 @@ jobs:
               problème quand la RHI sera fonctionnelle.
 
             1. Récupère le diff : `git diff ${{ github.event.before }} ${{ github.sha }}`.
-               Si `before` vaut 0000000..., utilise `git show ${{ github.sha }}`.
+               Si `before` est vide ou vaut 0000000..., utilise `git show ${{ github.sha }}`.
             2. Relis les fichiers modifiés en entier si le contexte est nécessaire.
 
             Points à vérifier en priorité :
