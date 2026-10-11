@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ICommandList.h"
+#include "RHI/VulkanUtils.h"
 
 class VulkanCommandList : public ICommandList
 {

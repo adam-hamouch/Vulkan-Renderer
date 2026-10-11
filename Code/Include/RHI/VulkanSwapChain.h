@@ -15,6 +15,7 @@ public:
     uint32_t AcquireNextImage() override;
     
     VkFormat GetSwapChainImageFormat() {return swapChainImageFormat;}
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
     
 private:
     
@@ -22,7 +23,6 @@ private:
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     void createImageViews(); 
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
     
     VkSwapchainKHR swapChain;
     std::vector<VkImage> swapChainImages;
