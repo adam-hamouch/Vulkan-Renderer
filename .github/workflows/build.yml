@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer le Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          install_runtime: true
+          cache: true
+          stripdown: true
+
+      - name: Configurer (CMake)
+        run: cmake -S . -B build-ci -G "Visual Studio 17 2022" -A x64
+
+      - name: Compiler
+        run: cmake --build build-ci --config ${{ matrix.config }} --parallel
