@@ -24,7 +24,7 @@ jobs:
           stripdown: true
 
       - name: Configurer (CMake)
-        run: cmake -S . -B build-ci -G "Visual Studio 17 2022" -A x64
+        run: cmake -S . -B build-ci -A x64
 
       - name: Compiler
         run: cmake --build build-ci --config ${{ matrix.config }} --parallel
