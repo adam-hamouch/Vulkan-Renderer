@@ -26,5 +26,8 @@ jobs:
       - name: Configurer (CMake)
         run: cmake -S . -B build-ci -A x64
 
+      - name: Afficher les erreurs MSVC en annotations
+        uses: ammaraskar/msvc-problem-matcher@master
+
       - name: Compiler
         run: cmake --build build-ci --config ${{ matrix.config }} --parallel
