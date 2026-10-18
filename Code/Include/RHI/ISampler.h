@@ -16,10 +16,10 @@ enum class AddressMode
 
 struct SamplerDesc 
 {
-    FilterMode magFilter;
-    FilterMode minFilter;
-    AddressMode addressMode;
-    float maxAnisotropy;
+    FilterMode  magFilter     = FilterMode::Linear;
+    FilterMode  minFilter     = FilterMode::Linear;
+    AddressMode addressMode   = AddressMode::Repeat;
+    float       maxAnisotropy = 16.0f;
 };
 
 class IDevice;

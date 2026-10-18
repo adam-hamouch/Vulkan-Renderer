@@ -56,4 +56,6 @@ std::vector<char> VulkanShader::readFile(const std::string& filename)
 
 void VulkanShader::Destroy()
 {
+    vkDestroyShaderModule(vkDevice->GetDevice(), shaderModule, nullptr);
+    shaderModule = VK_NULL_HANDLE;
 }

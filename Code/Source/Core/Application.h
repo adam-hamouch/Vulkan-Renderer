@@ -4,6 +4,12 @@
 #include "RHI/RHIUtils.h"
 #include "RHI/RHI.h"
 #include "RHI/VkRHI.h"
+#include "RHI/VulkanUtils.h"
+#include "LowRenderer/Camera.h"
+#include "LowRenderer/UniformBufferObjectt.h"
+
+#include <chrono>
+#include <vector>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -11,7 +17,7 @@ const uint32_t HEIGHT = 600;
 class Application
 {
 public:
-    void run() 
+    void run()
     {
         InitWindow();
         InitRHI();
@@ -19,16 +25,16 @@ public:
         RenderLoop();
         CleanUp();
     }
-    
+
     void InitWindow()
     {
         window = new Window();
         window->Create("Vulkan Renderer", WIDTH, HEIGHT);
     }
-    
+
     void InitRHI()
     {
-        rhi = new VulkanRHI();
+        rhi = new VkRHI();
 
         rhiInstance    = rhi->CreateInstance();
         rhiSurface     = rhi->CreateSurface();
@@ -36,6 +42,7 @@ public:
         rhiSwapChain   = rhi->CreateSwapChain();
         rhiQueue       = rhi->CreateQueue();
         rhiRenderPass  = rhi->CreateRenderPass();
+        rhiFramebuffer = rhi->CreateFramebuffer();
         vertShader     = rhi->CreateShader();
         fragShader     = rhi->CreateShader();
         rhiPipeline    = rhi->CreatePipeline();
@@ -47,34 +54,45 @@ public:
         rhiModel       = rhi->CreateModel();
         rhiMesh        = rhi->CreateMesh();
         rhiMaterial    = rhi->CreateMaterial();
+
+        uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+        for (IBuffer*& uniformBuffer : uniformBuffers)
+            uniformBuffer = rhi->CreateBuffer();
     }
-    
+
     void InitRenderingEngine()
     {
         rhiInstance->Create("VulkanRenderer");
-        rhiSurface->Create(rhiInstance, window->GetHandle());
+        rhiSurface->Create(rhiInstance, window);
         rhiDevice->Create(rhiInstance, rhiSurface);
-        rhiSwapChain->Create(rhiDevice, rhiSurface, window->GetHandle()); 
-        rhiQueue->Create(rhiDevice, QueueType::Graphics);
+        rhiSwapChain->Create(rhiDevice, rhiSurface, window);
+        rhiQueue->Create(rhiDevice, QueueType::GRAPHICS);
 
         InitCamera();
 
         RenderPassDesc renderPassDesc;
         renderPassDesc.attachments = {
-            {AttachmentFormat::BGRA8,   LoadOp::Clear,    StoreOp::Store, false, false, 4},
-            {AttachmentFormat::Depth32, LoadOp::Clear,    StoreOp::DontCare, true,  false, 4},
-            {AttachmentFormat::BGRA8,   LoadOp::DontCare, StoreOp::Store,    false, true,  1}
+            {AttachmentFormat::BGRA8,   LoadOp::CLEAR,    StoreOp::STORE,    false, false, 4},
+            {AttachmentFormat::Depth32, LoadOp::CLEAR,    StoreOp::DONTCARE, true,  false, 4},
+            {AttachmentFormat::BGRA8,   LoadOp::DONTCARE, StoreOp::STORE,    false, true,  1}
         };
         renderPassDesc.subPasses = { {{0}, {}, 1} };
         rhiRenderPass->Create(rhiDevice, renderPassDesc);
+        rhiFramebuffer->Create(rhiDevice, rhiSwapChain, rhiRenderPass);
 
-        ShaderDesc vertDesc{"Shaders/vert.spv", ShaderStage::Vertex};
-        ShaderDesc fragDesc{"Shaders/frag.spv", ShaderStage::Fragment};
-        vertShader->Create(rhiDevice, vertDesc);
-        fragShader->Create(rhiDevice, fragDesc);
+        ShaderDesc vertDesc{"../../Ressources/Shaders/vert.spv", ShaderStage::VERTEX};
+        ShaderDesc fragDesc{"../../Ressources/Shaders/frag.spv", ShaderStage::FRAGMENT};
+        vertShader->Create(vertDesc, rhiDevice);
+        fragShader->Create(fragDesc, rhiDevice);
 
         PipelineDesc pipelineDesc;
         pipelineDesc.shaders     = {vertShader, fragShader};
+        pipelineDesc.layout.stride     = sizeof(Vertex);
+        pipelineDesc.layout.attributes = {
+            {0, VertexFormat::Float3, offsetof(Vertex, pos)},
+            {1, VertexFormat::Float3, offsetof(Vertex, color)},
+            {2, VertexFormat::Float2, offsetof(Vertex, texCoord)}
+        };
         pipelineDesc.topology    = PrimitiveTopology::TriangleList;
         pipelineDesc.polygonMode = PolygonMode::Fill;
         pipelineDesc.cullMode    = CullMode::Back;
@@ -87,14 +105,19 @@ public:
 
         rhiCommandList->Create(rhiDevice);
 
-        rhiTexture->Load("Textures/viking_room.png");
+        rhiTexture->Load("../../Ressources/Textures/viking_room.png", rhiDevice, rhiSwapChain);
 
         SamplerDesc samplerDesc;
         rhiSampler->Create(rhiDevice, samplerDesc);
 
-        rhiMaterial->Create({rhiTexture, nullptr, rhiSampler, rhiPipeline});
+        for (IBuffer* uniformBuffer : uniformBuffers)
+            uniformBuffer->Create(rhiDevice, { MemoryType::CPU_To_GPU, BufferUsage::Uniform, sizeof(UniformBufferObject) });
+
+        rhiMaterial->Create(rhiDevice, {rhiTexture, nullptr, rhiSampler, rhiPipeline, uniformBuffers});
 
         rhiModel->Load("../../Ressources/Models/viking_room.obj");
+        const std::vector<Vertex>&   vertices = rhiModel->GetVertices();
+        const std::vector<uint32_t>& indices  = rhiModel->GetIndices();
 
         BufferDesc vertexBufferDesc;
         vertexBufferDesc.usage = BufferUsage::Vertex;
@@ -112,45 +135,148 @@ public:
 
         rhiMesh->Create(rhiDevice, rhiModel, rhiMaterial);
     }
-    
+
     void RenderLoop()
     {
+        while (!window->ShouldClose())
+        {
+            window->PollEvents();
+
+            if (window->WasResized()) {
+                window->ResetResized();
+                RecreateSwapChain();
+            }
+
+            uint32_t imageIndex = rhiSwapChain->AcquireNextImage();
+            uint32_t frame      = rhiSwapChain->GetCurrentFrame();
+
+            UpdateUniformBuffer(frame);
+
+            rhiCommandList->Begin(frame);
+            rhiRenderPass->Begin(rhiCommandList, rhiFramebuffer, imageIndex);
+
+            rhiCommandList->SetViewport(0.0f, 0.0f, (float) window->GetWidth(), (float) window->GetHeight());
+            rhiCommandList->SetScicors(0, 0, window->GetWidth(), window->GetHeight());
+
+            rhiCommandList->BindPipeline(rhiPipeline);
+            rhiCommandList->BindVertexBuffer(vertexBuffer);
+            rhiCommandList->BindIndexBuffer(indexBuffer);
+            rhiMaterial->Bind(rhiCommandList);
+
+            rhiCommandList->DrawIndexed(static_cast<uint32_t>(rhiModel->GetIndices().size()));
+
+            rhiRenderPass->End(rhiCommandList);
+            rhiCommandList->End();
+
+            rhiQueue->Submit(rhiCommandList, rhiSwapChain);
+            rhiSwapChain->Present(rhiQueue);
+        }
+    }
+
+    void UpdateUniformBuffer(uint32_t frameIndex)
+    {
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        UniformBufferObject ubo{};
+        ubo.model = GpuMat4(Mat4::RotationZ(DegToRad(time * 90.0f)).Transpose());
+        ubo.view = GpuMat4(camera->GetViewMatrix().Transpose());
+        Mat4 proj = camera->GetProjectionMatrix();
+        proj.data[5] *= -1.0f;
+        ubo.proj = GpuMat4(proj.Transpose());
+
+        uniformBuffers[frameIndex]->Upload(&ubo, sizeof(ubo));
+    }
+
+    void RecreateSwapChain()
+    {
+        window->WaitWhileMinimized();
+
+        rhiDevice->WaitIdle();
+
+        rhiFramebuffer->Destroy();
+        rhiSwapChain->Resize(window->GetWidth(), window->GetHeight());
+        rhiFramebuffer->Create(rhiDevice, rhiSwapChain, rhiRenderPass);
+
+        camera->SetProjectionMatrix(
+            DegToRad(45.0f),
+            window->GetWidth() / (float) window->GetHeight(),
+            0.1f,
+            10.0f);
     }
 
     void CleanUp()
     {
-        rhiInstance->Destroy();
+        rhiDevice->WaitIdle();
+
+        rhi->Destroy(rhiMesh);
+        rhi->Destroy(rhiMaterial);
+        rhi->Destroy(rhiModel);
+
+        for (IBuffer* uniformBuffer : uniformBuffers)
+            rhi->Destroy(uniformBuffer);
+        uniformBuffers.clear();
+
+        rhi->Destroy(indexBuffer);
+        rhi->Destroy(vertexBuffer);
+
+        rhi->Destroy(rhiSampler);
+        rhi->Destroy(rhiTexture);
+
+        rhi->Destroy(rhiCommandList);
+
+        rhi->Destroy(rhiPipeline);
+        rhi->Destroy(fragShader);
+        rhi->Destroy(vertShader);
+
+        rhi->Destroy(rhiFramebuffer);
+        rhi->Destroy(rhiRenderPass);
+        rhi->Destroy(rhiSwapChain);
+        rhi->Destroy(rhiQueue);
+
+        rhi->Destroy(rhiDevice);
+        rhi->Destroy(rhiSurface);
+        rhi->Destroy(rhiInstance);
+
+        delete rhi;
+        delete camera;
+
+        window->Destroy();
+        delete window;
     }
-    
+
     void InitCamera()
     {
         camera = new Camera();
-        
+
         camera->eye    = Vector3D(2.0f, 2.0f, 2.0f);
         camera->center = Vector3D(0.0f, 0.0f, 0.0f);
         camera->up     = Vector3D(0.0f, 0.0f, 1.0f);
         camera->SetViewMatrix();
-        
+
         camera->SetProjectionMatrix(
-        45.0f * (M_PI / 180.0f), 
-        swapChainExtent.width / (float)swapChainExtent.height,
+        DegToRad(45.0f),
+        window->GetWidth() / (float) window->GetHeight(),
         0.1f,
         10.0f);
     }
-    
+
 private:
-    Window* window; 
-    
+    Window* window;
+
     Camera* camera;
-    
+
     IRHI* rhi;
-    
+
     IInstance*    rhiInstance;
     ISurface*     rhiSurface;
     IDevice*      rhiDevice;
     ISwapChain*   rhiSwapChain;
     IQueue*       rhiQueue;
     IRenderPass*  rhiRenderPass;
+    IFramebuffer* rhiFramebuffer;
     IShader*      vertShader;
     IShader*      fragShader;
     IPipeline*    rhiPipeline;
@@ -162,19 +288,6 @@ private:
     IModel*       rhiModel;
     IMesh*        rhiMesh;
     IMaterial*    rhiMaterial;
-};
 
-int main() 
-{
-   	Application app;
-    
-   	try 
-       {
-           app.run();
-       } catch (const std::exception& e) {
-           std::cerr << e.what() << std::endl;
-           return EXIT_FAILURE;
-       }
-   
-       return EXIT_SUCCESS;
-}
+    std::vector<IBuffer*> uniformBuffers;
+};

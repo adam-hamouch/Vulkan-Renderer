@@ -145,6 +145,13 @@ void VulkanPipeline::Create(IDevice* rhiDevice, PipelineDesc desc)
 
 void VulkanPipeline::Destroy()
 {
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+
+    graphicsPipeline    = VK_NULL_HANDLE;
+    pipelineLayout      = VK_NULL_HANDLE;
+    descriptorSetLayout = VK_NULL_HANDLE;
 }
 
 void VulkanPipeline::createDescriptorSetLayout()

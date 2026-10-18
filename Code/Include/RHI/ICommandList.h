@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 class IDevice;
 class IBuffer;
@@ -14,7 +15,7 @@ public:
     virtual void Create(IDevice* device) = 0;
     virtual void Destroy() = 0;
 
-    virtual void Begin() = 0;
+    virtual void Begin(uint32_t frameIndex) = 0;
     virtual void End() = 0;
     virtual void Reset() = 0;
 
@@ -23,9 +24,6 @@ public:
 
     virtual void BindVertexBuffer(IBuffer* buffer) = 0;
     virtual void BindIndexBuffer(IBuffer* buffer) = 0;
-
-    virtual void BindBuffer(uint32_t  binding, IBuffer* buffer) = 0;
-    virtual void BindTexture(uint32_t  binding, ITexture* texture, ISampler* sampler) = 0;
 
     virtual void BindPipeline(IPipeline* pipeline) = 0;
     virtual void DrawIndexed(uint32_t  indexCount) = 0;

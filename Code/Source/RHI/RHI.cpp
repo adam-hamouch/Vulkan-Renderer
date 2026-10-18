@@ -8,6 +8,7 @@
 #include "../Include/RHI/IPipeline.h"
 #include "../Include/RHI/IQueue.h"
 #include "../Include/RHI/IRenderPass.h"
+#include "../Include/RHI/IFramebuffer.h"
 #include "../Include/RHI/ISampler.h"
 #include "../Include/RHI/IShader.h"
 #include "../Include/RHI/ISurface.h"

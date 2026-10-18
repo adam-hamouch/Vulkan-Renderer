@@ -8,6 +8,7 @@ class IModel;
 class IPipeline;
 class IQueue;
 class IRenderPass;
+class IFramebuffer;
 class ISampler;
 class IShader;
 class ISurface;
@@ -27,6 +28,7 @@ public:
     virtual ISwapChain*    CreateSwapChain()    = 0;
     virtual IQueue*        CreateQueue()        = 0;
     virtual IRenderPass*   CreateRenderPass()   = 0;
+    virtual IFramebuffer*  CreateFramebuffer()  = 0;
     virtual IPipeline*     CreatePipeline()     = 0;
     virtual ICommandList*  CreateCommandList()  = 0;
     virtual IBuffer*       CreateBuffer()       = 0;
@@ -43,6 +45,7 @@ public:
     virtual void Destroy(ISwapChain*   swapChain)   = 0;
     virtual void Destroy(IQueue*       queue)       = 0;
     virtual void Destroy(IRenderPass*  renderPass)  = 0;
+    virtual void Destroy(IFramebuffer* framebuffer) = 0;
     virtual void Destroy(IPipeline*    pipeline)    = 0;
     virtual void Destroy(ICommandList* commandList) = 0;
     virtual void Destroy(IBuffer*      buffer)      = 0;

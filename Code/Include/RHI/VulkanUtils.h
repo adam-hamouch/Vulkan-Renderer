@@ -14,8 +14,13 @@
 #include <chrono>
 #include <vector>
 
+// Inclus explicitement : GLFW a pu etre inclus avant sans GLFW_INCLUDE_VULKAN (ex: Window.h)
+#include <vulkan/vulkan.h>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"

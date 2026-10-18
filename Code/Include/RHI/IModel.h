@@ -20,8 +20,11 @@ public:
     
     virtual void Load(const char* path) = 0;
     virtual void Destroy() = 0;
+
+    const std::vector<Vertex>&   GetVertices() const { return vertices; }
+    const std::vector<uint32_t>& GetIndices()  const { return indices; }
     
 protected:
     std::vector<Vertex> vertices;
-    std::vector<int> indices;
+    std::vector<uint32_t> indices;
 };

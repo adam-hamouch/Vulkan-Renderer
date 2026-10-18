@@ -11,6 +11,7 @@ public:
     ISwapChain*    CreateSwapChain()    override;
     IQueue*        CreateQueue()        override;
     IRenderPass*   CreateRenderPass()   override;
+    IFramebuffer*  CreateFramebuffer()  override;
     IPipeline*     CreatePipeline()     override;
     ICommandList*  CreateCommandList()  override;
     IBuffer*       CreateBuffer()       override;
@@ -27,6 +28,7 @@ public:
     void Destroy(ISwapChain*   swapChain)   override;
     void Destroy(IQueue*       queue)       override;
     void Destroy(IRenderPass*  renderPass)  override;
+    void Destroy(IFramebuffer* framebuffer) override;
     void Destroy(IPipeline*    pipeline)    override;
     void Destroy(ICommandList* commandList) override;
     void Destroy(IBuffer*      buffer)      override;

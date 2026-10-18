@@ -1,11 +1,13 @@
 #include "../Include/RHI/VulkanRenderPass.h"
 #include "../Include/RHI/VulkanSwapChain.h"
+#include "../Include/RHI/VulkanFramebuffer.h"
+#include "../Include/RHI/VulkanCommandList.h"
 
 void VulkanRenderPass::Create(IDevice* device, RenderPassDesc desc)
 {
-    VulkanDevice* vkDevice = static_cast<VulkanDevice*>(device);
+    vkDevice = static_cast<VulkanDevice*>(device);
 
-    std::vector<VkAttachmentDescription> attachments;
+    attachments.clear();
     for (const auto& att : desc.attachments)
     {
         VkAttachmentDescription vkAtt{};
@@ -123,12 +125,37 @@ VkFormat VulkanRenderPass::findSupportedFormat(const std::vector<VkFormat>& cand
 
 void VulkanRenderPass::Destroy()
 {
+    vkDestroyRenderPass(vkDevice->GetDevice(), renderPass, nullptr);
+    renderPass = VK_NULL_HANDLE;
 }
 
-void VulkanRenderPass::Begin(ICommandList* commandist)
+void VulkanRenderPass::Begin(ICommandList* commandist, IFramebuffer* framebuffer, uint32_t imageIndex)
 {
+    VulkanFramebuffer* vkFramebuffer = static_cast<VulkanFramebuffer*>(framebuffer);
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = vkFramebuffer->GetFramebuffer(imageIndex);
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = vkFramebuffer->GetExtent();
+
+    // Une clear value par attachment (couleur noire, depth a 1)
+    std::vector<VkClearValue> clearValues(attachments.size());
+    for (size_t i = 0; i < attachments.size(); i++) {
+        if (attachments[i].finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+            clearValues[i].depthStencil = {1.0f, 0};
+        else
+            clearValues[i].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    }
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(static_cast<VulkanCommandList*>(commandist)->GetCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void VulkanRenderPass::End(ICommandList* commandist)
 {
+    vkCmdEndRenderPass(static_cast<VulkanCommandList*>(commandist)->GetCommandBuffer());
 }

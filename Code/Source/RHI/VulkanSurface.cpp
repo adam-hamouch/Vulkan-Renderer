@@ -6,12 +6,14 @@
 void VulkanSurface::Create(IInstance* instance, Window* window)
 {
     VulkanInstance* vkInstance = static_cast<VulkanInstance*>(instance);
-    
-    if (glfwCreateWindowSurface(vkInstance->GetVkInstance(), window->GetHandle(), nullptr, &surface) != VK_SUCCESS) {
+    this->instance = vkInstance->GetVkInstance();
+
+    if (glfwCreateWindowSurface(this->instance, window->GetHandle(), nullptr, &surface) != VK_SUCCESS) {
         throw std::runtime_error("échec de la création de la window surface!");
     }
 }
 
 void VulkanSurface::Destroy()
 {
+    vkDestroySurfaceKHR(instance, surface, nullptr);
 }

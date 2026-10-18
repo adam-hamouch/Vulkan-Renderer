@@ -22,7 +22,8 @@ class VulkanDevice : public IDevice
 public:
     void Create(IInstance* instance, ISurface* surface) override;
     void Destroy() override;
-    
+    void WaitIdle() override { vkDeviceWaitIdle(device); }
+
     VkPhysicalDevice      GetPhysicalDevice() const { return physicalDevice; }
     VkDevice              GetDevice()         const { return device; }
     VkQueue               GetGraphicsQueue()  const { return graphicsQueue; }
@@ -32,6 +33,10 @@ public:
     
     QueueFamilyIndices      FindQueueFamilies(VkPhysicalDevice device);
     SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+    uint32_t                FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+    VkCommandBuffer BeginSingleTimeCommands();
+    void            EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 
 private:
     void pickPhysicalDevice();
@@ -47,6 +52,7 @@ private:
     VkSurfaceKHR          surface        = VK_NULL_HANDLE;
     VkInstance          instance        = VK_NULL_HANDLE;
     VkSampleCountFlagBits msaaSamples    = VK_SAMPLE_COUNT_1_BIT;
+    VkCommandPool         transferPool   = VK_NULL_HANDLE;
     
     const std::vector<const char*> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME

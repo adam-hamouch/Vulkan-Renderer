@@ -32,9 +32,23 @@ bool Window::ShouldClose() const
     return glfwWindowShouldClose(window);
 }
 
+void Window::WaitWhileMinimized()
+{
+    int fbWidth = 0, fbHeight = 0;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    while (fbWidth == 0 || fbHeight == 0) {
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        glfwWaitEvents();
+    }
+
+    width  = fbWidth;
+    height = fbHeight;
+}
+
 void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
     auto* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-    win->width  = width;
-    win->height = height;
+    win->width   = width;
+    win->height  = height;
+    win->resized = true;
 }

@@ -15,4 +15,5 @@ public:
     
 private :
     VkSurfaceKHR surface;
+    VkInstance   instance = VK_NULL_HANDLE;
 };

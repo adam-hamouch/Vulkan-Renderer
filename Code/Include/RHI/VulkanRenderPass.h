@@ -10,15 +10,17 @@ public:
     void Create(IDevice* device, RenderPassDesc desc) override;
     void Destroy() override;
 
-    void Begin(ICommandList* commandist) override;
+    void Begin(ICommandList* commandist, IFramebuffer* framebuffer, uint32_t imageIndex) override;
     void End(ICommandList* commandist) override;
     
     VkRenderPass Get() {return renderPass;}
-    
+    const std::vector<VkAttachmentDescription>& GetAttachments() const {return attachments;}
+
 private:
     VkFormat findDepthFormat();
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-    
+
     VkRenderPass renderPass;
+    std::vector<VkAttachmentDescription> attachments;
     VulkanDevice* vkDevice;
 };

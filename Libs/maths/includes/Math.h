@@ -262,3 +262,10 @@ public:
     Vector3D operator*(const Vector3D& other) const;
     Vector4D operator*(const Vector4D& v) const;
 };
+
+struct GpuMat4
+{
+    float data[16];
+    GpuMat4() {}
+    GpuMat4(const Mat4& m) { memcpy(data, m.data, sizeof(data)); }
+};

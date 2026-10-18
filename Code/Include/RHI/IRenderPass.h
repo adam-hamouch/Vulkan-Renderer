@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <cstdint>
 
 enum class StoreOp
 {
@@ -44,6 +45,7 @@ struct RenderPassDesc
 
 class IDevice;
 class ICommandList;
+class IFramebuffer;
 
 class IRenderPass
 {
@@ -53,6 +55,6 @@ public:
     virtual void Create(IDevice* device, RenderPassDesc desc) = 0;
     virtual void Destroy() = 0;
 
-    virtual void Begin(ICommandList* commandist) = 0;
+    virtual void Begin(ICommandList* commandist, IFramebuffer* framebuffer, uint32_t imageIndex) = 0;
     virtual void End(ICommandList* commandist) = 0;
 };
