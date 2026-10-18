@@ -43,22 +43,19 @@ jobs:
           cat > prompt.md <<'PROMPT'
           Tu fais la code review d'un push sur un moteur de rendu Vulkan en C++20 avec une couche RHI.
 
-          CONTEXTE DE TRAVAIL (important) :
-          Le projet est en refactor progressif et long : le pipeline Vulkan du tutoriel
-          (gros fichier de base, ex. main.cpp / Application) est reconstitué morceau par morceau
-          sous forme de RHI (interfaces I*.h + implémentations Vulkan*). À chaque push le projet
-          NE COMPILE PAS, c'est attendu : le fichier de base est découpé au fur et à mesure,
-          des classes sont à moitié écrites, des Destroy()/méthodes sont encore vides, des
-          appels pointent vers du code pas encore migré.
-          - Ne signale PAS : erreurs de compilation, symboles manquants, méthodes vides ou TODO,
-            code mort ou commenté dans le fichier de base, intégration pas encore branchée.
-          - Concentre-toi sur les MODIFICATIONS de ce commit : le code ajouté ou changé est-il
-            correct en lui-même, et fidèle à ce qu'il remplace dans le code Vulkan d'origine
-            (paramètres perdus, flags/enum mal convertis, ordre d'appels changé, ressource créée
-            sans destroy prévu, logique dupliquée entre l'ancien fichier et la RHI) ?
-          - Garde la vue d'ensemble en tête mais ne fais pas d'audit global du projet. Une remarque
-            d'architecture RHI n'est utile que si ce commit introduit un choix qui posera
-            problème quand la RHI sera fonctionnelle.
+          CONTEXTE :
+          La RHI compile désormais (interfaces I*.h + implémentations Vulkan*). Le projet est en
+          phase de nettoyage puis d'ajout de features (ECS, frame graph, deferred, PBR...).
+          Un job CI séparé vérifie déjà la compilation : ne commente une erreur de compilation que
+          si elle est évidente dans le diff.
+          - Pars des MODIFICATIONS de ce commit, puis vérifie leur cohérence avec le reste du projet :
+            appelants et implémentations impactés, interfaces I*.h modifiées sans que les classes
+            Vulkan* ou le code client suivent, ressources dont la durée de vie ou l'ordre de
+            destruction change, synchronisation (fences/semaphores, frames in flight).
+          - Remarques d'architecture bienvenues si le commit introduit un couplage ou une
+            responsabilité mal placée (ex. logique hors rôle dans VulkanDevice, type Vk* exposé
+            dans une interface, dépendance client -> backend Vulkan).
+          - Pas d'audit exhaustif du projet à chaque commit : reste centré sur ce que le commit touche.
 
           Points à vérifier en priorité :
           - Séparation RHI : aucun include Vulkan (vulkan.h, GLFW_INCLUDE_VULKAN, types Vk*)
