@@ -105,7 +105,7 @@ public:
 
         rhiCommandList->Create(rhiDevice);
 
-        rhiTexture->Load("../../Ressources/Textures/viking_room.png", rhiDevice, rhiSwapChain);
+        rhiTexture->Load("../../Ressources/Textures/viking_room.png", rhiDevice);
 
         SamplerDesc samplerDesc;
         rhiSampler->Create(rhiDevice, samplerDesc);

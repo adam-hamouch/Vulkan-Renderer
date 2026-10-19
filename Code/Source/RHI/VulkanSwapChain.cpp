@@ -59,10 +59,6 @@ void VulkanSwapChain::Create(IDevice* device, ISurface* surface, Window* window)
             throw std::runtime_error("échec de la création de la swap chain!");
         }
         
-        vkGetSwapchainImagesKHR(vkDevice->GetDevice(), swapChain, &imageCount, nullptr);
-        swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(vkDevice->GetDevice(), swapChain, &imageCount, swapChainImages.data());
-        
         swapChainImageFormat = surfaceFormat.format;
         swapChainExtent = extent;
     
@@ -125,33 +121,20 @@ VkExtent2D VulkanSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& cap
 
 void VulkanSwapChain::createImageViews() 
 {
-    swapChainImageViews.resize(swapChainImages.size());
+    uint32_t imageCount = 0;
+    vkGetSwapchainImagesKHR(vkDevice->GetDevice(), swapChain, &imageCount, nullptr);
+    std::vector<VkImage> images(imageCount);
+    vkGetSwapchainImagesKHR(vkDevice->GetDevice(), swapChain, &imageCount, images.data());
 
-    for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-        swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    swapChainImages.resize(imageCount);
+    for (uint32_t i = 0; i < imageCount; i++) {
+        VulkanImage& image = swapChainImages[i];
+        image.vkDevice  = vkDevice;
+        image.image     = images[i];
+        image.format    = swapChainImageFormat;
+        image.ownsImage = false;
+        image.createImageView();
     }
-}
-
-VkImageView VulkanSwapChain::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
-{
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = format;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-    viewInfo.subresourceRange.aspectMask = aspectFlags;
-    viewInfo.subresourceRange.levelCount = mipLevels;
-        
-    VkImageView imageView;
-    if (vkCreateImageView(vkDevice->GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-        throw std::runtime_error("échec de la creation de la vue sur une image!");
-    }
-
-    return imageView;
 }
 
 void VulkanSwapChain::createSyncObjects()
@@ -189,9 +172,9 @@ void VulkanSwapChain::Destroy()
     imageAvailableSemaphores.clear();
     inFlightFences.clear();
 
-    for (VkImageView imageView : swapChainImageViews)
-        vkDestroyImageView(vkDevice->GetDevice(), imageView, nullptr);
-    swapChainImageViews.clear();
+    for (VulkanImage& image : swapChainImages)
+        image.Destroy();
+    swapChainImages.clear();
 
     vkDestroySwapchainKHR(vkDevice->GetDevice(), swapChain, nullptr);
     swapChain = VK_NULL_HANDLE;
@@ -199,7 +182,6 @@ void VulkanSwapChain::Destroy()
 
 void VulkanSwapChain::Resize(uint32_t width, uint32_t height)
 {
-    // L'extent est relu depuis la surface / la fenetre dans Create()
     Destroy();
     Create(vkDevice, surface, window);
 }
@@ -216,7 +198,6 @@ void VulkanSwapChain::Present(IQueue* queue)
     presentInfo.pSwapchains = &swapChain;
     presentInfo.pImageIndices = &imageIndex;
 
-    // OUT_OF_DATE / SUBOPTIMAL : la recreation est geree par l'Application via Window::WasResized()
     VkResult result = vkQueuePresentKHR(static_cast<VulkanQueue*>(queue)->GetQueue(), &presentInfo);
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR && result != VK_ERROR_OUT_OF_DATE_KHR) {
         throw std::runtime_error("échec de la présentation d'une image!");

@@ -15,3 +15,4 @@
 #include "../Include/RHI/ISwapChain.h"
 #include "../Include/RHI/ITexture.h"
 #include "../Include/RHI/IDevice.h"
+#include "../Include/RHI/IImage.h"

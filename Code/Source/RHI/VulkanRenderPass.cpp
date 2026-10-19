@@ -8,6 +8,7 @@ void VulkanRenderPass::Create(IDevice* device, RenderPassDesc desc)
     vkDevice = static_cast<VulkanDevice*>(device);
 
     attachments.clear();
+    attachmentDescs = desc.attachments;
     for (const auto& att : desc.attachments)
     {
         VkAttachmentDescription vkAtt{};
@@ -140,7 +141,6 @@ void VulkanRenderPass::Begin(ICommandList* commandist, IFramebuffer* framebuffer
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = vkFramebuffer->GetExtent();
 
-    // Une clear value par attachment (couleur noire, depth a 1)
     std::vector<VkClearValue> clearValues(attachments.size());
     for (size_t i = 0; i < attachments.size(); i++) {
         if (attachments[i].finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)

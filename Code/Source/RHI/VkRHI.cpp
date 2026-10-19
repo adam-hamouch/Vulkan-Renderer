@@ -17,6 +17,7 @@
 #include "RHI/VulkanMesh.h"
 #include "RHI/VulkanModel.h"
 #include "RHI/VulkanMaterial.h"
+#include "RHI/VulkanImage.h"
 
 IInstance* VkRHI::CreateInstance()
 {
@@ -96,6 +97,11 @@ IModel* VkRHI::CreateModel()
 IMaterial* VkRHI::CreateMaterial()
 {
     return new VulkanMaterial();
+}
+
+IImage* VkRHI::CreateImage()
+{
+    return new VulkanImage();
 }
 
 void VkRHI::Destroy(IInstance* instance)
@@ -192,4 +198,10 @@ void VkRHI::Destroy(IMaterial* material)
 {
     material->Destroy();
     delete material;
+}
+
+void VkRHI::Destroy(IImage* image)
+{
+    image->Destroy();
+    delete image;
 }

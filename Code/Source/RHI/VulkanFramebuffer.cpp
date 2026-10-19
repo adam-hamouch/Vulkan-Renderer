@@ -2,6 +2,18 @@
 #include "../Include/RHI/VulkanSwapChain.h"
 #include "../Include/RHI/VulkanRenderPass.h"
 
+static Format ToFormat(AttachmentFormat format)
+{
+    switch (format)
+    {
+    case AttachmentFormat::RGBA8:           return Format::RGBA8_SRGB;
+    case AttachmentFormat::BGRA8:           return Format::BGRA8_SRGB;
+    case AttachmentFormat::Depth32:         return Format::D32_FLOAT;
+    case AttachmentFormat::Depth24Stencil8: return Format::D24_UNORM_S8_UINT;
+    default:                                return Format::Undefined;
+    }
+}
+
 void VulkanFramebuffer::Create(IDevice* device, ISwapChain* swapChain, IRenderPass* renderPass)
 {
     vkDevice = static_cast<VulkanDevice*>(device);
@@ -25,14 +37,8 @@ void VulkanFramebuffer::Destroy()
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     framebuffers.clear();
 
-    for (AttachmentImage& attachment : attachmentImages) {
-        if (attachment.image == VK_NULL_HANDLE)
-            continue;
-
-        vkDestroyImageView(device, attachment.view, nullptr);
-        vkDestroyImage(device, attachment.image, nullptr);
-        vkFreeMemory(device, attachment.memory, nullptr);
-    }
+    for (VulkanImage& attachment : attachmentImages)
+        attachment.Destroy();
     attachmentImages.clear();
 }
 
@@ -44,37 +50,36 @@ void VulkanFramebuffer::Recreate(ISwapChain* swapChain)
 
 void VulkanFramebuffer::createAttachments()
 {
-    const std::vector<VkAttachmentDescription>& descriptions = vkRenderPass->GetAttachments();
+    const std::vector<Attachment>& descriptions = vkRenderPass->GetAttachmentDescs();
     attachmentImages.resize(descriptions.size());
 
     for (size_t i = 0; i < descriptions.size(); i++) {
-        const VkAttachmentDescription& desc = descriptions[i];
+        const Attachment& att = descriptions[i];
 
-        if (desc.finalLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
+        if (att.isResolve)
             continue;
 
-        bool isDepth = desc.finalLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        ImageDesc desc;
+        desc.width       = extent.width;
+        desc.height      = extent.height;
+        desc.sampleCount = static_cast<uint32_t>(att.sampleCount);
+        desc.format      = ToFormat(att.format);
+        desc.usage       = att.isDepth ? Usage::DepthAttachment : Usage::ColorAttachment;
 
-        VkImageUsageFlags  usage  = isDepth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
-                                            : VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        VkImageAspectFlags aspect = isDepth ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-
-        AttachmentImage& attachment = attachmentImages[i];
-        createImage(extent.width, extent.height, desc.samples, desc.format, usage, attachment.image, attachment.memory);
-        attachment.view = vkSwapChain->createImageView(attachment.image, desc.format, aspect, 1);
+        attachmentImages[i].Create(vkDevice, desc);
     }
 }
 
 void VulkanFramebuffer::createFramebuffers()
 {
-    const std::vector<VkImageView>& swapChainImageViews = vkSwapChain->GetImageViews();
-    framebuffers.resize(swapChainImageViews.size());
+    const std::vector<VulkanImage>& swapChainImages = vkSwapChain->GetImages();
+    framebuffers.resize(swapChainImages.size());
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
         std::vector<VkImageView> attachments(attachmentImages.size());
         for (size_t a = 0; a < attachmentImages.size(); a++) {
-            attachments[a] = attachmentImages[a].image != VK_NULL_HANDLE ? attachmentImages[a].view
-                                                                         : swapChainImageViews[i];
+            attachments[a] = attachmentImages[a].GetImage() != VK_NULL_HANDLE ? attachmentImages[a].GetImageView()
+                                                                              : swapChainImages[i].GetImageView();
         }
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -90,40 +95,4 @@ void VulkanFramebuffer::createFramebuffers()
             throw std::runtime_error("échec de la création d'un framebuffer!");
         }
     }
-}
-
-void VulkanFramebuffer::createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits numSamples, VkFormat format, VkImageUsageFlags usage, VkImage& image, VkDeviceMemory& imageMemory)
-{
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = width;
-    imageInfo.extent.height = height;
-    imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.format = format;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = usage;
-    imageInfo.samples = numSamples;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    if (vkCreateImage(vkDevice->GetDevice(), &imageInfo, nullptr, &image) != VK_SUCCESS) {
-        throw std::runtime_error("echec de la creation d'une image!");
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(vkDevice->GetDevice(), image, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = vkDevice->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    if (vkAllocateMemory(vkDevice->GetDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-        throw std::runtime_error("echec de l'allocation de la memoire d'une image!");
-    }
-
-    vkBindImageMemory(vkDevice->GetDevice(), image, imageMemory, 0);
 }

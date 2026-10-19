@@ -16,6 +16,7 @@ class ISwapChain;
 class ITexture;
 class IDevice;
 class IMesh;
+class IImage;
 
 class IRHI
 {
@@ -38,6 +39,7 @@ public:
     virtual IMesh*         CreateMesh()         = 0;
     virtual IModel*        CreateModel()        = 0;
     virtual IMaterial*     CreateMaterial()     = 0;
+    virtual IImage*     CreateImage()     = 0;
 
     virtual void Destroy(IInstance*    instance)    = 0;
     virtual void Destroy(IDevice*      device)      = 0;
@@ -55,4 +57,5 @@ public:
     virtual void Destroy(IMesh*        mesh)        = 0;
     virtual void Destroy(IModel*       model)       = 0;
     virtual void Destroy(IMaterial*    material)    = 0;
+    virtual void Destroy(IImage*    image)    = 0;
 };

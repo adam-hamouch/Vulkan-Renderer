@@ -3,6 +3,7 @@
 #include "ISwapChain.h"
 #include "../Include/RHI/VulkanDevice.h"
 #include "../Include/RHI/VulkanUtils.h"
+#include "../Include/RHI/VulkanImage.h"
 
 class VulkanSwapChain : public ISwapChain
 {
@@ -17,10 +18,8 @@ public:
     
     VkFormat GetSwapChainImageFormat() {return swapChainImageFormat;}
     VkExtent2D GetExtent() const {return swapChainExtent;}
-    const std::vector<VkImageView>& GetImageViews() const {return swapChainImageViews;}
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+    const std::vector<VulkanImage>& GetImages() const {return swapChainImages;}
 
-    // Objets de synchronisation de la frame courante
     VkSemaphore GetImageAvailableSemaphore() const { return imageAvailableSemaphores[currentFrame]; }
     VkSemaphore GetRenderFinishedSemaphore() const { return renderFinishedSemaphores[currentFrame]; }
     VkFence     GetInFlightFence()           const { return inFlightFences[currentFrame]; }
@@ -34,10 +33,9 @@ private:
     void createSyncObjects();
     
     VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
+    std::vector<VulkanImage> swapChainImages;
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
     VulkanDevice* vkDevice;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -46,7 +44,6 @@ private:
     uint32_t currentFrame = 0;
     uint32_t imageIndex   = 0;
 
-    // Gardes pour pouvoir recreer la swap chain dans Resize()
     ISurface* surface = nullptr;
     Window*   window  = nullptr;
 };

@@ -21,6 +21,7 @@ public:
     IMesh*         CreateMesh()         override;
     IModel*        CreateModel()        override;
     IMaterial*     CreateMaterial()     override;
+    IImage*     CreateImage()     override;
 
     void Destroy(IInstance*    instance)    override;
     void Destroy(IDevice*      device)      override;
@@ -38,4 +39,5 @@ public:
     void Destroy(IMesh*        mesh)        override;
     void Destroy(IModel*       model)       override;
     void Destroy(IMaterial*    material)    override;
+    void Destroy(IImage*       image)    override;
 };

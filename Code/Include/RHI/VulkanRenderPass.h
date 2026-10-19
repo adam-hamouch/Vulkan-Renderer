@@ -15,6 +15,7 @@ public:
     
     VkRenderPass Get() {return renderPass;}
     const std::vector<VkAttachmentDescription>& GetAttachments() const {return attachments;}
+    const std::vector<Attachment>& GetAttachmentDescs() const {return attachmentDescs;}
 
 private:
     VkFormat findDepthFormat();
@@ -22,5 +23,6 @@ private:
 
     VkRenderPass renderPass;
     std::vector<VkAttachmentDescription> attachments;
+    std::vector<Attachment> attachmentDescs;
     VulkanDevice* vkDevice;
 };
