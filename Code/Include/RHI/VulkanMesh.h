@@ -5,6 +5,6 @@
 class VulkanMesh : public IMesh
 {
 public:
-    void Create(IDevice* device, IModel* model, IMaterial* material) override;
+    void Create(IDevice* device, std::shared_ptr<IModel> model) override;
     void Destroy() override;
 };

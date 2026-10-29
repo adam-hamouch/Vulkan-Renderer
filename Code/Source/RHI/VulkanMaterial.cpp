@@ -12,10 +12,9 @@ void VulkanMaterial::Create(IDevice* rhiDevice, MaterialDesc desc)
     device = static_cast<VulkanDevice*>(rhiDevice)->GetDevice();
 
     VulkanPipeline* vkPipeline = static_cast<VulkanPipeline*>(desc.pipeline);
-    VulkanTexture*  vkTexture  = static_cast<VulkanTexture*>(desc.albedo);
+    VulkanTexture*  vkTexture  = static_cast<VulkanTexture*>(desc.albedo.get());
     VulkanSampler*  vkSampler  = static_cast<VulkanSampler*>(desc.sampler);
 
-    // Un descriptor set par frame en vol (un par uniform buffer)
     uint32_t setCount = static_cast<uint32_t>(desc.uniformBuffers.size());
 
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
@@ -83,10 +82,12 @@ void VulkanMaterial::Create(IDevice* rhiDevice, MaterialDesc desc)
 
 void VulkanMaterial::Destroy()
 {
-    // Libere aussi les descriptor sets alloues dans la pool
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
     descriptorPool = VK_NULL_HANDLE;
     descriptorSets.clear();
+
+    // Rend les references sur les textures, le manager reste seul juge de leur destruction
+    materialDesc = {};
 }
 
 void VulkanMaterial::Bind(ICommandList* cmdList)

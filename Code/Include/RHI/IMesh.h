@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 class IDevice;
 class IMaterial;
@@ -9,13 +10,16 @@ class IMesh
 {
 public:
     virtual ~IMesh() = default;
-    
-    virtual void Create(IDevice* device, IModel* model, IMaterial* material) = 0;
-    virtual void Destroy() = 0;
-    
-private:
-    IBuffer* vertexBuffer;
-    IBuffer* indexBuffer;
 
-    IMaterial* material;
+    virtual void Create(IDevice* device, std::shared_ptr<IModel> model) = 0;
+    virtual void Destroy() = 0;
+
+protected:
+    // Possede par le ResourcesManager : le mesh le garde seulement en vie tant qu'il existe
+    std::shared_ptr<IModel> model;
+
+    IBuffer* vertexBuffer = nullptr;
+    IBuffer* indexBuffer  = nullptr;
+
+    IMaterial* material = nullptr;
 };

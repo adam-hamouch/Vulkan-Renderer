@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <vector>
 
 class ITexture;
@@ -10,8 +11,10 @@ class IDevice;
 
 struct MaterialDesc
 {
-    ITexture*  albedo    = nullptr;
-    ITexture*  normal    = nullptr;
+    // Possedees par le ResourcesManager : le material les garde seulement en vie tant qu'il existe
+    std::shared_ptr<ITexture> albedo;
+    std::shared_ptr<ITexture> normal;
+
     ISampler*  sampler   = nullptr;
     IPipeline* pipeline  = nullptr;
 

@@ -7,6 +7,7 @@
 #include "RHI/VulkanUtils.h"
 #include "LowRenderer/Camera.h"
 #include "LowRenderer/UniformBufferObjectt.h"
+#include "Resources/ResourcesManager.h"
 
 #include <chrono>
 #include <vector>
@@ -35,7 +36,7 @@ public:
     void InitRHI()
     {
         rhi = new VkRHI();
-
+        
         rhiInstance    = rhi->CreateInstance();
         rhiSurface     = rhi->CreateSurface();
         rhiDevice      = rhi->CreateDevice();
@@ -43,15 +44,11 @@ public:
         rhiQueue       = rhi->CreateQueue();
         rhiRenderPass  = rhi->CreateRenderPass();
         rhiFramebuffer = rhi->CreateFramebuffer();
-        vertShader     = rhi->CreateShader();
-        fragShader     = rhi->CreateShader();
         rhiPipeline    = rhi->CreatePipeline();
         rhiCommandList = rhi->CreateCommandList();
         vertexBuffer   = rhi->CreateBuffer();
         indexBuffer    = rhi->CreateBuffer();
-        rhiTexture     = rhi->CreateTexture();
         rhiSampler     = rhi->CreateSampler();
-        rhiModel       = rhi->CreateModel();
         rhiMesh        = rhi->CreateMesh();
         rhiMaterial    = rhi->CreateMaterial();
 
@@ -65,6 +62,9 @@ public:
         rhiInstance->Create("VulkanRenderer");
         rhiSurface->Create(rhiInstance, window);
         rhiDevice->Create(rhiInstance, rhiSurface);
+        
+        resourcesManager = new ResourcesManager(rhi, rhiDevice);
+        
         rhiSwapChain->Create(rhiDevice, rhiSurface, window);
         rhiQueue->Create(rhiDevice, QueueType::GRAPHICS);
 
@@ -80,13 +80,11 @@ public:
         rhiRenderPass->Create(rhiDevice, renderPassDesc);
         rhiFramebuffer->Create(rhiDevice, rhiSwapChain, rhiRenderPass);
 
-        ShaderDesc vertDesc{"../../Ressources/Shaders/vert.spv", ShaderStage::VERTEX};
-        ShaderDesc fragDesc{"../../Ressources/Shaders/frag.spv", ShaderStage::FRAGMENT};
-        vertShader->Create(vertDesc, rhiDevice);
-        fragShader->Create(fragDesc, rhiDevice);
+        vertShader = resourcesManager->Load<IShader>("../../Ressources/Shaders/vert.spv", ShaderStage::VERTEX);
+        fragShader = resourcesManager->Load<IShader>("../../Ressources/Shaders/frag.spv", ShaderStage::FRAGMENT);
 
         PipelineDesc pipelineDesc;
-        pipelineDesc.shaders     = {vertShader, fragShader};
+        pipelineDesc.shaders = {vertShader.get(), fragShader.get()};
         pipelineDesc.layout.stride     = sizeof(Vertex);
         pipelineDesc.layout.attributes = {
             {0, VertexFormat::Float3, offsetof(Vertex, pos)},
@@ -105,7 +103,7 @@ public:
 
         rhiCommandList->Create(rhiDevice);
 
-        rhiTexture->Load("../../Ressources/Textures/viking_room.png", rhiDevice);
+        rhiTexture = resourcesManager->Load<ITexture>("../../Ressources/Textures/viking_room.png");
 
         SamplerDesc samplerDesc;
         rhiSampler->Create(rhiDevice, samplerDesc);
@@ -115,7 +113,7 @@ public:
 
         rhiMaterial->Create(rhiDevice, {rhiTexture, nullptr, rhiSampler, rhiPipeline, uniformBuffers});
 
-        rhiModel->Load("../../Ressources/Models/viking_room.obj");
+        rhiModel = resourcesManager->Load<IModel>("../../Ressources/Models/viking_room.obj");
         const std::vector<Vertex>&   vertices = rhiModel->GetVertices();
         const std::vector<uint32_t>& indices  = rhiModel->GetIndices();
 
@@ -133,7 +131,7 @@ public:
         indexBuffer->Create(rhiDevice, indexBufferDesc);
         indexBuffer->Upload(indices.data(), sizeof(uint32_t) * indices.size());
 
-        rhiMesh->Create(rhiDevice, rhiModel, rhiMaterial);
+        rhiMesh->Create(rhiDevice, rhiModel);
     }
 
     void RenderLoop()
@@ -213,7 +211,6 @@ public:
 
         rhi->Destroy(rhiMesh);
         rhi->Destroy(rhiMaterial);
-        rhi->Destroy(rhiModel);
 
         for (IBuffer* uniformBuffer : uniformBuffers)
             rhi->Destroy(uniformBuffer);
@@ -223,13 +220,15 @@ public:
         rhi->Destroy(vertexBuffer);
 
         rhi->Destroy(rhiSampler);
-        rhi->Destroy(rhiTexture);
-
         rhi->Destroy(rhiCommandList);
 
         rhi->Destroy(rhiPipeline);
-        rhi->Destroy(fragShader);
-        rhi->Destroy(vertShader);
+
+        rhiTexture.reset();
+        rhiModel.reset();
+        vertShader.reset();
+        fragShader.reset();
+        delete resourcesManager;
 
         rhi->Destroy(rhiFramebuffer);
         rhi->Destroy(rhiRenderPass);
@@ -269,6 +268,8 @@ private:
     Camera* camera;
 
     IRHI* rhi;
+    
+    ResourcesManager* resourcesManager;
 
     IInstance*    rhiInstance;
     ISurface*     rhiSurface;
@@ -277,15 +278,15 @@ private:
     IQueue*       rhiQueue;
     IRenderPass*  rhiRenderPass;
     IFramebuffer* rhiFramebuffer;
-    IShader*      vertShader;
-    IShader*      fragShader;
+    std::shared_ptr<IShader>     vertShader;
+    std::shared_ptr<IShader>      fragShader;
     IPipeline*    rhiPipeline;
     ICommandList* rhiCommandList;
     IBuffer*      vertexBuffer;
     IBuffer*      indexBuffer;
-    ITexture*     rhiTexture;
+    std::shared_ptr<ITexture>     rhiTexture;
     ISampler*     rhiSampler;
-    IModel*       rhiModel;
+    std::shared_ptr<IModel>      rhiModel;
     IMesh*        rhiMesh;
     IMaterial*    rhiMaterial;
 
