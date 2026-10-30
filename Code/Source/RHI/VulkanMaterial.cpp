@@ -86,7 +86,6 @@ void VulkanMaterial::Destroy()
     descriptorPool = VK_NULL_HANDLE;
     descriptorSets.clear();
 
-    // Rend les references sur les textures, le manager reste seul juge de leur destruction
     materialDesc = {};
 }
 

@@ -46,8 +46,6 @@ public:
         rhiFramebuffer = rhi->CreateFramebuffer();
         rhiPipeline    = rhi->CreatePipeline();
         rhiCommandList = rhi->CreateCommandList();
-        vertexBuffer   = rhi->CreateBuffer();
-        indexBuffer    = rhi->CreateBuffer();
         rhiSampler     = rhi->CreateSampler();
         rhiMesh        = rhi->CreateMesh();
         rhiMaterial    = rhi->CreateMaterial();
@@ -113,25 +111,7 @@ public:
 
         rhiMaterial->Create(rhiDevice, {rhiTexture, nullptr, rhiSampler, rhiPipeline, uniformBuffers});
 
-        rhiModel = resourcesManager->Load<IModel>("../../Ressources/Models/viking_room.obj");
-        const std::vector<Vertex>&   vertices = rhiModel->GetVertices();
-        const std::vector<uint32_t>& indices  = rhiModel->GetIndices();
-
-        BufferDesc vertexBufferDesc;
-        vertexBufferDesc.usage = BufferUsage::Vertex;
-        vertexBufferDesc.type  = MemoryType::GPU_Only;
-        vertexBufferDesc.size  = sizeof(Vertex) * vertices.size();
-        vertexBuffer->Create(rhiDevice, vertexBufferDesc);
-        vertexBuffer->Upload(vertices.data(), sizeof(Vertex) * vertices.size());
-
-        BufferDesc indexBufferDesc;
-        indexBufferDesc.usage = BufferUsage::Index;
-        indexBufferDesc.type  = MemoryType::GPU_Only;
-        indexBufferDesc.size  = sizeof(uint32_t) * indices.size();
-        indexBuffer->Create(rhiDevice, indexBufferDesc);
-        indexBuffer->Upload(indices.data(), sizeof(uint32_t) * indices.size());
-
-        rhiMesh->Create(rhiDevice, rhiModel);
+        rhiMesh->Create(rhiDevice, "../../Ressources/Models/viking_room.obj", resourcesManager);
     }
 
     void RenderLoop()
@@ -157,12 +137,8 @@ public:
             rhiCommandList->SetScicors(0, 0, window->GetWidth(), window->GetHeight());
 
             rhiCommandList->BindPipeline(rhiPipeline);
-            rhiCommandList->BindVertexBuffer(vertexBuffer);
-            rhiCommandList->BindIndexBuffer(indexBuffer);
-            rhiMaterial->Bind(rhiCommandList);
-
-            rhiCommandList->DrawIndexed(static_cast<uint32_t>(rhiModel->GetIndices().size()));
-
+            
+            rhiMesh->Draw(rhiDevice, rhiMaterial, rhiCommandList);
             rhiRenderPass->End(rhiCommandList);
             rhiCommandList->End();
 
@@ -216,16 +192,12 @@ public:
             rhi->Destroy(uniformBuffer);
         uniformBuffers.clear();
 
-        rhi->Destroy(indexBuffer);
-        rhi->Destroy(vertexBuffer);
-
         rhi->Destroy(rhiSampler);
         rhi->Destroy(rhiCommandList);
 
         rhi->Destroy(rhiPipeline);
 
         rhiTexture.reset();
-        rhiModel.reset();
         vertShader.reset();
         fragShader.reset();
         delete resourcesManager;
@@ -282,11 +254,8 @@ private:
     std::shared_ptr<IShader>      fragShader;
     IPipeline*    rhiPipeline;
     ICommandList* rhiCommandList;
-    IBuffer*      vertexBuffer;
-    IBuffer*      indexBuffer;
     std::shared_ptr<ITexture>     rhiTexture;
     ISampler*     rhiSampler;
-    std::shared_ptr<IModel>      rhiModel;
     IMesh*        rhiMesh;
     IMaterial*    rhiMaterial;
 

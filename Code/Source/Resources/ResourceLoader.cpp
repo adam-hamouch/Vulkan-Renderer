@@ -3,7 +3,6 @@
 #include "RHI/ITexture.h"
 #include "RHI/IModel.h"
 
-// Emballe la ressource avant de la charger : si le chargement lance une exception, elle est quand meme rendue a la RHI
 template<typename T>
 static std::shared_ptr<T> MakeShared(T* resource, IRHI* rhi)
 {
