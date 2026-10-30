@@ -1,8 +1,10 @@
 #include "../Include/RHI/VulkanMesh.h"
+#include "Resources/ResourcesManager.h"
 
 #include "RHI/VulkanBuffer.h"
 #include "RHI/ICommandList.h"
 #include "RHI/IMaterial.h"
+#include "RHI/IModel.h"
 
 void VulkanMesh::Create(IDevice* device, const char* filePath, ResourcesManager* resourcesManager)
 {
@@ -28,7 +30,7 @@ void VulkanMesh::Create(IDevice* device, const char* filePath, ResourcesManager*
     indexBuffer->Upload(indices.data(), sizeof(uint32_t) * indices.size());
 }
 
-void VulkanMesh::Draw(IDevice* device, IMaterial* material, ICommandList* commandList)
+void VulkanMesh::Draw(IMaterial* material, ICommandList* commandList)
 {
     commandList->BindVertexBuffer(vertexBuffer);
     commandList->BindIndexBuffer(indexBuffer);

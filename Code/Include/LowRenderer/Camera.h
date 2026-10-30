@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Core/Window/Window.h"
 #include "maths/includes/Math.h"
 
 class Camera
@@ -19,6 +20,8 @@ public:
     Vector3D offset = { 0.0f, 1.8f, 0.0f };
     Vector3D forward;
     Vector3D f, r, u;
+    
+    void InitBaseCamera(Window* window);
     
 private :
     Mat4 viewMatrix = Mat4::Identity();

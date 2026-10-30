@@ -40,3 +40,17 @@ void Camera::SetViewMatrix()
         0.0f, 0.0f, 0.0f, 1.0f
     };
 }
+
+void Camera::InitBaseCamera(Window* window)
+{
+    eye    = Vector3D(2.0f, 2.0f, 2.0f);
+    center = Vector3D(0.0f, 0.0f, 0.0f);
+    up     = Vector3D(0.0f, 0.0f, 1.0f);
+    SetViewMatrix();
+
+    SetProjectionMatrix(
+    DegToRad(45.0f),
+    window->GetWidth() / (float) window->GetHeight(),
+    0.1f,
+    10.0f);
+}
